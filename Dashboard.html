@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Topology 6 - SDN Implementation Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0f172a;
+            --secondary: #1e40af;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --light: #f1f5f9;
+            --border: #e2e8f0;
+            --code-bg: #1e293b;
+            --code-text: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: #1e293b;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        header {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            border-left: 6px solid var(--accent);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(100px, -100px);
+        }
+
+        header h1 {
+            color: var(--primary);
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        header p {
+            color: #64748b;
+            font-size: 1.1em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .topology-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .info-card {
+            background: var(--light);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .info-card strong {
+            color: var(--secondary);
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            padding: 12px 24px;
+            border: 2px solid var(--border);
+            background: white;
+            color: var(--secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+        }
+
+        .nav-tab:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .nav-tab.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Content Sections */
+        .content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* File Card */
+        .file-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid var(--accent);
+        }
+
+        .file-card h2 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-icon {
+            font-size: 1.5em;
+        }
+
+        .file-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+            padding: 15px;
+            background: var(--light);
+            border-radius: 8px;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .meta-label {
+            font-size: 0.85em;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .meta-value {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            margin: 15px 0;
+            border-left: 4px solid var(--accent);
+            position: relative;
+        }
+
+        .code-label {
+            font-size: 0.8em;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .code-content {
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* Topology Diagram */
+        .topology-diagram {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            overflow-x: auto;
+        }
+
+        .diagram {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: var(--primary);
+            line-height: 1.6;
+            white-space: pre;
+        }
+
+        /* Rules Table */
+        .rules-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .rules-table th {
+            background: var(--secondary);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .rules-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .rules-table tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .allow-rule {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 3px solid var(--success);
+        }
+
+        .deny-rule {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 3px solid var(--danger);
+        }
+
+        /* Status Badge */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin: 5px 5px 5px 0;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .badge-info {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        /* Command Section */
+        .command-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid var(--accent);
+        }
+
+        .command-section h3 {
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .command-list {
+            list-style: none;
+        }
+
+        .command-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+        }
+
+        .command-list li:last-child {
+            border-bottom: none;
+        }
+
+        .command-num {
+            background: var(--accent);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        /* Footer */
+        footer {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 40px;
+            color: #64748b;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .nav-tabs {
+                flex-direction: column;
+            }
+
+            .nav-tab {
+                width: 100%;
+            }
+
+            .topology-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>🏗️ Topology 6 - SDN Implementation</h1>
+            <p>IE4080 Assignment 2 - Direct OpenFlow, Ryu Controller & Floodlight</p>
+            <div class="topology-info">
+                <div class="info-card">
+                    <strong>📊 Structure</strong>
+                    7 Switches + 8 Hosts
+                </div>
+                <div class="info-card">
+                    <strong>⚡ Core</strong>
+                    S1 (Hierarchical)
+                </div>
+                <div class="info-card">
+                    <strong>📍 Distribution</strong>
+                    S2, S3 (Left & Right)
+                </div>
+                <div class="info-card">
+                    <strong>🔌 Access</strong>
+                    S4-S7 (4 Access Switches)
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('overview')">📋 Overview</button>
+            <button class="nav-tab" onclick="showTab('topology')">🏗️ Topology</button>
+            <button class="nav-tab" onclick="showTab('partA')">⚙️ Part A - OpenFlow</button>
+            <button class="nav-tab" onclick="showTab('partB')">🎮 Part B - Ryu</button>
+            <button class="nav-tab" onclick="showTab('partC')">☁️ Part C - Floodlight</button>
+            <button class="nav-tab" onclick="showTab('testing')">🧪 Testing</button>
+        </div>
+
+        <!-- OVERVIEW TAB -->
+        <div id="overview" class="content active">
+            <div class="file-card">
+                <h2><span class="file-icon">📋</span> Assignment Overview</h2>
+                <p>Implement Topology 6 using three different SDN approaches and compare performance.</p>
+
+                <h3 style="margin-top: 20px; color: var(--secondary);">Topology 6 Specification</h3>
+                <div class="rules-table" style="background: var(--light); border-radius: 0;">
+                    <table style="background: white;">
+                        <thead>
+                            <tr>
+                                <th>Layer</th>
+                                <th>Switches</th>
+                                <th>Description</th>
+                                <th>Connected To</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Core</strong></td>
+                                <td>S1</td>
+                                <td>Central switch routing traffic</td>
+                                <td>S2, S3</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Distribution</strong></td>
+                                <td>S2, S3</td>
+                                <td>Left & Right distribution</td>
+                                <td>S1, Access Switches</td>
+                            </tr>
+                            <tr style="background: rgba(16, 185, 129, 0.1);">
+                                <td><strong>Access</strong></td>
+                                <td>S4, S5</td>
+                                <td>H1-H4 (Clients)</td>
+                                <td>S2</td>
+                            </tr>
+                            <tr style="background: rgba(16, 185, 129, 0.1);">
+                                <td><strong>Access</strong></td>
+                                <td>S6</td>
+                                <td>H5-H6 (Servers)</td>
+                                <td>S3</td>
+                            </tr>
+                            <tr style="background: rgba(239, 68, 68, 0.1);">
+                                <td><strong>Access</strong></td>
+                                <td>S7</td>
+                                <td>H7-H8 (Isolated)</td>
+                                <td>S3</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 style="margin-top: 20px; color: var(--secondary);">Communication Policy</h3>
+                <table class="rules-table">
+                    <thead>
+                        <tr>
+                            <th>Source</th>
+                            <th>Destination</th>
+                            <th>Status</th>
+                            <th>Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="allow-rule">
+                            <td>H1-H4</td>
+                            <td>H5-H6</td>
+                            <td><span class="badge badge-success">✓ ALLOW</span></td>
+                            <td>Clients → Servers</td>
+                        </tr>
+                        <tr class="allow-rule">
+                            <td>H5-H6</td>
+                            <td>H1-H2</td>
+                            <td><span class="badge badge-success">✓ ALLOW</span></td>
+                            <td>Server Responses</td>
+                        </tr>
+                        <tr class="allow-rule">
+                            <td>H7 ↔ H8</td>
+                            <td>Each Other</td>
+                            <td><span class="badge badge-success">✓ ALLOW</span></td>
+                            <td>Isolated Subnet</td>
+                        </tr>
+                        <tr class="deny-rule">
+                            <td>H1-H4</td>
+                            <td>H7-H8</td>
+                            <td><span class="badge badge-warning">✗ BLOCK</span></td>
+                            <td>No client access to isolated</td>
+                        </tr>
+                        <tr class="deny-rule">
+                            <td>H5-H6</td>
+                            <td>H7-H8</td>
+                            <td><span class="badge badge-warning">✗ BLOCK</span></td>
+                            <td>No server access to isolated</td>
+                        </tr>
+                        <tr class="deny-rule">
+                            <td>H7-H8</td>
+                            <td>Any Outside</td>
+                            <td><span class="badge badge-warning">✗ BLOCK</span></td>
+                            <td>Isolated completely</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 style="margin-top: 20px; color: var(--secondary);">IP Addressing</h3>
+                <div class="info-card" style="margin-top: 10px;">
+                    <strong style="color: var(--primary);">H1, H2:</strong> 10.0.1.1/24, 10.0.1.2/24 (via S4)
+                </div>
+                <div class="info-card">
+                    <strong style="color: var(--primary);">H3, H4:</strong> 10.0.2.1/24, 10.0.2.2/24 (via S5)
+                </div>
+                <div class="info-card">
+                    <strong style="color: var(--primary);">H5, H6:</strong> 10.0.3.1/24, 10.0.3.2/24 (via S6)
+                </div>
+                <div class="info-card">
+                    <strong style="color: var(--primary);">H7, H8:</strong> 10.0.4.1/24, 10.0.4.2/24 (via S7) - ISOLATED
+                </div>
+            </div>
+        </div>
+
+        <!-- TOPOLOGY TAB -->
+        <div id="topology" class="content">
+            <div class="file-card">
+                <h2><span class="file-icon">🏗️</span> Network Topology Structure</h2>
+
+                <div class="topology-diagram">
+                    <div class="diagram">        ┌─────────────────┐
+        │    CORE: S1     │
+        └────────┬────────┘
+             ┌───┴────┐
+         ┌───┴──┐  ┌──┴───┐
+         │  S2  │  │  S3  │
+       (Dist) (Dist)
+         ├──┬──┘  └──┬──┤
+         │  │        │  │
+        S4 S5      S6 S7
+        │  │        │  │
+    H1,H2 H3,H4  H5,H6 H7,H8
+   10.0.1  10.0.2  10.0.3  10.0.4
+                           (ISOLATED)</div>
+                </div>
+
+                <h3 style="margin-top: 20px; color: var(--secondary);">File: Topology.py</h3>
+                <div class="file-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">Lines of Code</span>
+                        <span class="meta-value">154</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Switches</span>
+                        <span class="meta-value">7 (S1-S7)</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Hosts</span>
+                        <span class="meta-value">8 (H1-H8)</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Links</span>
+                        <span class="meta-value">14 (Switch-to-Switch & Host)</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Controller Modes</span>
+                        <span class="meta-value">None, Ryu, Floodlight</span>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 20px; color: var(--secondary);">How to Start Topology</h3>
+                <div class="command-section">
+                    <h3 style="margin: 0 0 15px 0; color: var(--primary);">Using Python Directly</h3>
+                    <div class="code-block">
+                        <div class="code-label">Part A - No Controller</div>
+                        <div class="code-content">$ sudo python3 Topology.py --controller none</div>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-label">Part B - Ryu Controller</div>
+                        <div class="code-content">$ sudo python3 Topology.py --controller ryu</div>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-label">Part C - Floodlight Controller</div>
+                        <div class="code-content">$ sudo python3 Topology.py --controller floodlight</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 20px; color: var(--secondary);">Features</h3>
+                <div>
+                    <span class="badge badge-info">✓ Dynamic Controller Selection</span>
+                    <span class="badge badge-info">✓ OpenFlow 1.3 Support</span>
+                    <span class="badge badge-info">✓ Static Route Configuration</span>
+                    <span class="badge badge-info">✓ Custom MAC Addresses</span>
+                    <span class="badge badge-info">✓ Mininet CLI Integration</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PART A TAB -->
+        <div id="partA" class="content">
+            <div class="file-card">
+                <h2><span class="file-icon">⚙️</span> Part A - Direct OpenFlow Rules</h2>
+
+                <div class="file-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">File</span>
+                        <span class="meta-value">AddRules.sh</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Type</span>
+                        <span class="meta-value">Bash Script</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Lines</span>
+                        <span class="meta-value">180+</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Install Time</span>
+                        <span class="meta-value">~1-2 seconds</span>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 20px; color: var(--secondary);">Rule Installation Process</h3>
+                <ol class="command-list" style="list-style: none; padding: 0;">
+                    <li>
+                        <div class="command-num">1</div>
+                        <div>Clear all existing flows on all 7 switches</div>
+                    </li>
+                    <li>
+                        <div class="command-num">2</div>
+                        <div>Install ARP rules for switch-to-switch communication</div>
+                    </li>
+                    <li>
+                        <div class="command-num">3</div>
+                        <div>Install ALLOW rules for H1-H4 → H5-H6 traffic</div>
+                    </li>
+                    <li>
+                        <div class="command-num">4</div>
+                        <div>Install ALLOW rules for H5-H6 → H1-H2 traffic</div>
+                    </li>
+                    <li>
+                        <div class="command-num">5</div>
+                        <div>Install DROP rules to block H1-H4 → H7-H8</div>
+                    </li>
+                    <li>
+                        <div class="command-num">6</div>
+                        <div>Install DROP rules to block H7-H8 from outside</div>
+                    </li>
+                    <li>
+                        <div class="command-num">7</div>
+                        <div>Install ALLOW rules for isolated H7 ↔ H8</div>
+                    </li>
+                    <li>
+                        <div class="command-num">8</div>
+                        <div>Install default DROP rule on each switch</div>
+                    </li>
+                </ol>
+
+                <h3 style="margin-top: 20px; color: var(--secondary);">Running Part A</h3>
+                <div class="command-section">
+                    <div class="code-block">
+                        <div class="code-label">Terminal 1 - Start Mininet</div>
+                        <div class="code-content">$ cd ~
+$ sudo mn -c
+$ sudo python3 Topology.py --controller none
+*** Network is ready
+mininet></div>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-label">Terminal 2 - Install Rules</div>
+                        <div class="code-content">$ time sudo bash AddRules.sh 2>&1 | tee log.txt
+========================================
+  IE4080 Topology 6 - Installing Rules
+  Part A: Direct OpenFlow Rules
+========================================
+
+[1/9] Clearing all existing flows...
+[2/9] Installing ARP rules...
+[3/9] Installing rules on s1 (Core)...
+...
+========================================
+  All rules installed successfully!
+========================================</div>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-label">Terminal 1 - Test Connectivity</div>
+                        <div class="code-content">mininet> pingall</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 20px; color: var(--secondary);">Expected Result</h3>
+                <div class="command-section">
+                    <div class="code-block">
+                        <div class="code-label">Connectivity Matrix</div>
+                        <div class="code-content">h1 -> X X X h5 h6 X X
+h2 -> X X X h5 h6 X X
+h3 -> X X X h5 h6 X X
+h4 -> X X X h5 h6 X X
+h5 -> h1 h2 X X X X X
+h6 -> h1 h2 X X X X X
+h7 -> X X X X X X h8
+h8 -> X X X X X X h7</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PART B TAB -->
+        <div id="partB" class="content">
+            <div class="file-card">
+                <h2><span class="file-icon">🎮</span> Part B - Ryu SDN Controller</h2>
+
+                <div class="file-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">File</span>
+                        <span class="meta-value">AddRulesRyu.py</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Type</span>
+                        <span class="meta-value">Python Ryu App</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Lines</span>
+                        <span class="meta-value">350+</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Install Time</span>
+                        <span class="meta-value">~5-10 seconds</span>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 20px; color: var(--secondary);">Ryu Controller Features</h3>
+                <div>
+                    <span class="badge badge-info">✓ Proactive Rule Installation</span>
+                    <span class="badge badge-info">✓ Per-Switch Logic</span>
+                    <span class="badge badge-info">✓ Dynamic Flow Management</span>
+                    <span class="badge badge-info">✓ Event-Driven Architecture</span>
+                    <span class="badge badge-info">✓ OpenFlow 1.3 Support</span>
+                </div>
+
+                <h3 style="margin-top: 20px; color: var(--secondary);">Running Part B</h3>
+                <div class="command-section">
+                    <div class="code-block">
+                        <div class="code-label">Terminal 1 - Start Ryu Controller</div>
+                        <div class="code-content">$ cd ~/ryu
+$ ryu-manager AddRulesRyu.py --verbose 2>&1 | tee ryu_log.txt
+loading app ryu.app.ofctl_rest
+loading app AddRulesRyu
+instantiating app ryu.app.ofctl_rest
+instantiating app AddRulesRyu
+BRICK AddRulesRyu
+  CONSUMES EventOFPSwitchFeatures
+...</div>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-label">Terminal 2 - Start Mininet with Ryu</div>
+                        <div class="code-content">$ sudo mn -c
+$ sudo python3 Topology.py --controller ryu
+*** Network is ready
+mininet></div>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-label">Terminal 2 - Test Connectivity</div>
+                        <div class="code-content">mininet> pingall
+
+Expected: Same pattern as Part A</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 20px; color: var(--secondary);">Ryu vs Direct OpenFlow</h3>
+                <table class="rules-table">
+                    <thead>
+                        <tr>
+                            <th>Aspect</th>
+                            <th>Part A (Direct)</th>
+                            <th>Part B (Ryu)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Setup Time</strong></td>
+                            <td>~1-2 seconds</td>
+                            <td>~5-10 seconds</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Method</strong></td>
+                            <td>Bash scripting</td>
+                            <td>Python application</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Management</strong></td>
+                            <td>Manual rules</td>
+                            <td>Centralized controller</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Scalability</strong></td>
+                            <td>Limited</td>
+                            <td>Excellent</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dynamic Updates</strong></td>
+                            <td>Requires restart</td>
+                            <td>Real-time possible</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PART C TAB -->
+        <div id="partC" class="content">
+            <div class="file-card">
+                <h2><span class="file-icon">☁️</span> Part C - Floodlight Controller</h2>
+
+                <div class="file-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">File</span>
+                        <span class="meta-value">AddRulesFloodlight.py</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Type</span>
+                        <span class="meta-value">Python REST Client</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Lines</span>
+                        <span class="meta-value">500+</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Install Time</span>
+                        <span class="meta-value">~10-15 seconds</span>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 20px; color: var(--secondary);">Floodlight Features</h3>
+                <div>
+                    <span class="badge badge-info">✓ Web Interface (Port 8080)</span>
+                    <span class="badge badge-info">✓ REST API-based Control</span>
+                    <span class="badge badge-info">✓ Static Flow Pusher</span>
+                    <span class="badge badge-info">✓ Enterprise-grade</span>
+                    <span class="badge badge-info">✓ Comprehensive Monitoring</span>
+                </div>
+
+                <h3 style="margin-top: 20px; color: var(--secondary);">Running Part C</h3>
+                <div class="command-section">
+                    <div class="code-block">
+                        <div class="code-label">Terminal 1 - Start Floodlight</div>
+                        <div class="code-content">$ cd ~/floodlight
+$ sudo java -jar ~/floodlight.jar
+Starting Floodlight...
+Server is listening...
+Floodlight is running on http://127.0.0.1:8080/ui/</div>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-label">Terminal 2 - Start Mininet</div>
+                        <div class="code-content">$ sudo python3 Topology.py --controller floodlight
+*** Network is ready
+mininet></div>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-label">Terminal 3 - Install Rules via REST API</div>
+                        <div class="code-content">$ python3 AddRulesFloodlight.py
+============================================================
+  Topology 6 - Floodlight Flow Installer
+============================================================
+[OK] Floodlight is running!
+
+[1] Clearing all existing flows...
+[OK] Cleared all existing flows
+
+[2] Installing flows on all switches...
+  Installing s1 (Core)...
+  [OK] s1 done
+  Installing s2 (Distribution-Left)...
+  [OK] s2 done
+...
+============================================================
+  All flows installed successfully!
+============================================================</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 20px; color: var(--secondary);">ICMP Type Trick (S6)</h3>
+                <div class="command-section">
+                    <p style="margin-bottom: 15px;"><strong>Special Feature:</strong> Asymmetric communication using ICMP type filtering</p>
+                    <div class="code-block">
+                        <div class="code-label">ICMP Type Filtering at S6</div>
+                        <div class="code-content">ICMP Type 8 (Echo Request):  H5 → H3 = BLOCKED (priority 200)
+ICMP Type 0 (Echo Reply):    H5 ← H3 = ALLOWED  (priority 300)
+
+Result: H3 can reply to H5, but H5 cannot initiate to H3!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TESTING TAB -->
+        <div id="testing" class="content">
+            <div class="file-card">
+                <h2><span class="file-icon">🧪</span> Testing & Verification</h2>
+
+                <h3 style="margin-top: 20px; color: var(--secondary);">Performance Metrics to Collect</h3>
+                <table class="rules-table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Part A (Direct)</th>
+                            <th>Part B (Ryu)</th>
+                            <th>Part C (Floodlight)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Setup Time</strong></td>
+                            <td>1-2 sec</td>
+                            <td>5-10 sec</td>
+                            <td>10-15 sec</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Latency (RTT)</strong></td>
+                            <td>0.5-1.0 ms</td>
+                            <td>0.5-1.5 ms</td>
+                            <td>0.5-1.5 ms</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Throughput</strong></td>
+                            <td>8-10 Mbps</td>
+                            <td>8-10 Mbps</td>
+                            <td>8-10 Mbps</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Packet Loss</strong></td>
+                            <td>0%</td>
+                            <td>0%</td>
+                            <td>0%</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 style="margin-top: 20px; color: var(--secondary);">Test Commands</h3>
+                <div class="command-section">
+                    <h3 style="margin: 0 0 15px 0; color: var(--primary);">Connectivity Test</h3>
+                    <div class="code-block">
+                        <div class="code-label">Verify All Policies</div>
+                        <div class="code-content">mininet> pingall</div>
+                    </div>
+                </div>
+
+                <div class="command-section">
+                    <h3 style="margin: 0 0 15px 0; color: var(--primary);">Latency Measurement</h3>
+                    <div class="code-block">
+                        <div class="code-label">Test Allowed Paths</div>
+                        <div class="code-content">mininet> h1 ping -c 100 h5 | tee ping_h1_h5.txt
+mininet> h5 ping -c 100 h1 | tee ping_h5_h1.txt
+mininet> h7 ping -c 100 h8 | tee ping_h7_h8.txt</div>
+                    </div>
+                </div>
+
+                <div class="command-section">
+                    <h3 style="margin: 0 0 15px 0; color: var(--primary);">Throughput Test (iperf)</h3>
+                    <div class="code-block">
+                        <div class="code-label">H1 → H5 Throughput</div>
+                        <div class="code-content">mininet> h5 iperf -s -p 5001 &
+mininet> h1 iperf -c 10.0.3.1 -p 5001 -t 60 -i 1</div>
+                    </div>
+                </div>
+
+                <div class="command-section">
+                    <h3 style="margin: 0 0 15px 0; color: var(--primary);">Flow Rule Verification</h3>
+                    <div class="code-block">
+                        <div class="code-label">Check Installed Rules</div>
+                        <div class="code-content">mininet> sh ovs-ofctl -O OpenFlow13 dump-flows s1
+mininet> sh ovs-ofctl -O OpenFlow13 dump-flows s6</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Team Section -->
+            <div class="file-card">
+                <h2><span class="file-icon">👥</span> About Our Team</h2>
+                <p style="color:#64748b; margin-bottom:15px;">
+                </p>
+
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:20px;">
+
+                    <!-- Member 1 -->
+                    <div style="text-align:center; background:#f8fafc; padding:20px; border-radius:12px; border:1px solid #e2e8f0;">
+                        <img src="images/damitha.jpg" 
+                            style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid #3b82f6;"
+                            alt="Member 1">
+                        <h3 style="margin-top:10px; color:#0f172a;">R.M.D.E. Rajapaksha</h3>
+                        <p style="color:#64748b;">Team Member</p>
+                        <p style="color:#3b82f6; font-size:0.9em;">IT22339188</p>
+                    </div>
+
+                    <!-- Member 2 -->
+                    <div style="text-align:center; background:#f8fafc; padding:20px; border-radius:12px; border:1px solid #e2e8f0;">
+                        <img src="images/rathnayaka.jpg" 
+                            style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid #3b82f6;"
+                            alt="Member 2">
+                        <h3 style="margin-top:10px; color:#0f172a;">R.M.H.L. Rathnayaka</h3>
+                        <p style="color:#64748b;">Team Member</p>
+                        <p style="color:#3b82f6; font-size:0.9em;">IT22199362</p>
+                    </div>
+
+                    <!-- Member 3 -->
+                    <div style="text-align:center; background:#f8fafc; padding:20px; border-radius:12px; border:1px solid #e2e8f0;">
+                        <img src="images/sithumini.jpg" 
+                            style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid #3b82f6;"
+                            alt="Member 3">
+                        <h3 style="margin-top:10px; color:#0f172a;">A.J.M.S. Sithumini</h3>
+                        <p style="color:#64748b;">Team Member</p>
+                        <p style="color:#3b82f6; font-size:0.9em;">IT22329974</p>
+                    </div>
+
+                </div>
+            </div>
+        <!-- Footer -->
+        <footer>
+            <p><strong>IE4080 - Software Defined Networks</strong></p>
+            <p>Assignment 2: Topology 6 Implementation & Performance Analysis</p>
+            <p>Last Updated: April 2026</p>
+        </footer>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all content
+            const contents = document.querySelectorAll('.content');
+            contents.forEach(content => content.classList.remove('active'));
+
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            // Show selected content
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+    </script>
+</body>
+</html>
