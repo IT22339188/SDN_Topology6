@@ -544,23 +544,14 @@
         <div id="topology" class="content">
             <div class="file-card">
                 <h2><span class="file-icon">🏗️</span> Network Topology Structure</h2>
+            <!-- Topology Image -->
+             <div class="topology-image">
+                <img src="topology.png" alt="Network Topology Diagram">
+             </div>
 
-                <div class="topology-diagram">
-                    <div class="diagram">        ┌─────────────────┐
-        │    CORE: S1     │
-        └────────┬────────┘
-             ┌───┴────┐
-         ┌───┴──┐  ┌──┴───┐
-         │  S2  │  │  S3  │
-       (Dist) (Dist)
-         ├──┬──┘  └──┬──┤
-         │  │        │  │
-        S4 S5      S6 S7
-        │  │        │  │
-    H1,H2 H3,H4  H5,H6 H7,H8
-   10.0.1  10.0.2  10.0.3  10.0.4
-                           (ISOLATED)</div>
-                </div>
+           </div>
+       </div>
+                
 
                 <h3 style="margin-top: 20px; color: var(--secondary);">File: Topology.py</h3>
                 <div class="file-meta">
@@ -779,9 +770,15 @@ mininet></div>
                     </div>
                     <div class="code-block">
                         <div class="code-label">Terminal 2 - Test Connectivity</div>
-                        <div class="code-content">mininet> pingall
-
-Expected: Same pattern as Part A</div>
+                        <div class="code-content">mininet> pingall</div>
+                        <div class="code-content">h1 -> X X X h5 h6 X X
+                        h2 -> X X X h5 h6 X X
+                        h3 -> X X X h5 h6 X X
+                        h4 -> X X X h5 h6 X X
+                        h5 -> h1 h2 X X X X X
+                        h6 -> h1 h2 X X X X X
+                        h7 -> X X X X X X h8
+                        h8 -> X X X X X X h7</div>
                     </div>
                 </div>
 
@@ -1002,34 +999,34 @@ mininet> sh ovs-ofctl -O OpenFlow13 dump-flows s6</div>
 
                     <!-- Member 1 -->
                     <div style="text-align:center; background:#f8fafc; padding:20px; border-radius:12px; border:1px solid #e2e8f0;">
-                        <img src="images/damitha.jpg" 
-                            style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid #3b82f6;"
-                            alt="Member 1">
-                        <h3 style="margin-top:10px; color:#0f172a;">R.M.D.E. Rajapaksha</h3>
-                        <p style="color:#64748b;">Team Member</p>
-                        <p style="color:#3b82f6; font-size:0.9em;">IT22339188</p>
-                    </div>
-
-                    <!-- Member 2 -->
-                    <div style="text-align:center; background:#f8fafc; padding:20px; border-radius:12px; border:1px solid #e2e8f0;">
-                        <img src="images/rathnayaka.jpg" 
-                            style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid #3b82f6;"
-                            alt="Member 2">
-                        <h3 style="margin-top:10px; color:#0f172a;">R.M.H.L. Rathnayaka</h3>
-                        <p style="color:#64748b;">Team Member</p>
-                        <p style="color:#3b82f6; font-size:0.9em;">IT22199362</p>
-                    </div>
-
-                    <!-- Member 3 -->
-                    <div style="text-align:center; background:#f8fafc; padding:20px; border-radius:12px; border:1px solid #e2e8f0;">
-                        <img src="images/sithumini.jpg" 
+                        <img src="team-member-3.png" 
                             style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid #3b82f6;"
                             alt="Member 3">
                         <h3 style="margin-top:10px; color:#0f172a;">A.J.M.S. Sithumini</h3>
                         <p style="color:#64748b;">Team Member</p>
                         <p style="color:#3b82f6; font-size:0.9em;">IT22329974</p>
                     </div>
-
+                    
+                    <!-- Member 2 -->
+                    <div style="text-align:center; background:#f8fafc; padding:20px; border-radius:12px; border:1px solid #e2e8f0;">
+                        <img src="team-member-2.png" 
+                            style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid #3b82f6;"
+                            alt="Member 2">
+                        <h3 style="margin-top:10px; color:#0f172a;">R.M.H.L. Rathnayaka</h3>
+                        <p style="color:#64748b;">Team Member</p>
+                        <p style="color:#3b82f6; font-size:0.9em;">IT22199362</p>
+                    </div>
+                    
+                    <!-- Member 3 -->
+                    <div style="text-align:center; background:#f8fafc; padding:20px; border-radius:12px; border:1px solid #e2e8f0;">
+                        <img src="team-member-1.png"
+                            style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid #3b82f6;"
+                            alt="Member 1">
+                        <h3 style="margin-top:10px; color:#0f172a;">R.M.D.E. Rajapaksha</h3>
+                        <p style="color:#64748b;">Team Member</p>
+                        <p style="color:#3b82f6; font-size:0.9em;">IT22339188</p>
+                    </div>
+                    
                 </div>
             </div>
         <!-- Footer -->
